@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- <link rel="stylesheet" type="text/css" href="/style-guide/css/fluig-style-guide.min.css"> -->
+    <!-- <script src="/portal/resources/js/jquery/jquery.js"></script>
+    <script src="/portal/resources/js/jquery/jquery-ui.min.js"></script>
+    <script src="/portal/resources/js/mustache/mustache-min.js"></script> -->
+    <!-- <script src="/style-guide/js/fluig-style-guide.min.js"></script> -->
+    <title>Fornecedor</title>
+</head>
+
+<body>
+
+    <div class="fluig-style-guide">
+
+        <h1>CADASTRO FORNECEDOR/PRODUTO</h1>
+
+        <h2>Dados do Fornecedor</h2><br><br>
+        <label for="razaoSocial">Razão Social*:</label><br>
+        <input type="text" name="razaoSocial" id="razaoSocial" required><br><br>
+
+        <label for="nomeFantasia">Nome Fantasia*:</label><br>
+        <input type="text" name="nomeFantasia" id="nomeFantasia" required><br><br>
+
+        <label for="CNPJ">CNPJ*:</label><br>
+        <input type="text" name="CNPJ" id="CNPJ" maxlength="18" required><br><br>
+
+        <label for="inscricaoEstadual">Inscrição Estadual:</label><br>
+        <input type="text" name="inscricaoEstadual" id="inscricaoEstadual"><br><br>
+
+        <label for="inscricaoMunicipal">Inscrição Municipal:</label><br>
+        <input type="text" name="inscricaoMunicipal" id="inscricaoMunicipal"><br><br>
+
+        <label for="cep">CEP*:</label><br>
+        <input type="text" name="cep" id="cep" maxlength="8" required><br><br>
+
+        <label for="endereco">Endereço:</label><br>
+        <input type="text" name="endereco" id="endereco" required><br><br>
+
+        <label for="nomePessoaContato">Nome da pessoa de contato*:</label><br>
+        <input type="text" name="nomePessoaContato" id="nomePessoaContato" required><br><br>
+
+        <label for="telefone">Telefone*:</label><br>
+        <input type="tel" name="telefone" id="telefone" maxlength="21" required><br><br>
+
+        <label for="email">E-mail*:</label><br>
+        <input type="email" name="email" id="email" required><br><br>
+
+        <h2>Produtos</h2><br>
+
+        <label for="descricao">Descrição:</label><br>
+        <input type="text" name="descricao" id="descricao"><br><br>
+
+        <label for="unidade">Unidade de Medida:</label><br>
+        <input type="text" name="unidade" id="unidade"><br><br>
+
+        <label for="quantEstoque">Quantidade em Estoque:</label><br>
+        <input type="text" name="quantEstoque" id="quantEstoque"><br><br>
+
+        <label for="valorUnitario">Valor Unitario:</label><br>
+        <input type="text" name="valorUnitario" id="valorUnitario"><br><br>
+
+        <button id="produto">Adicionar Produto</button>
+
+        <table id="exibirProdutos">
+            <!-- produtos aqui -->
+        </table><br><br>
+
+        <h2>Anexos</h2><br>
+
+        <input type="file" name="arquivo" id="arquivo">
+        <button id="anexo">novo anexo</button>
+
+        <table id="exibirAnexos">
+            <!-- produtos aqui -->
+        </table><br><br>
+
+        <button id="salvarFornecedor">Salvar Fornecedor</button>
+    </div>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+
+            document.getElementById("cep").addEventListener("input", function () {
+                FormtCep(this);
+            });
+            document.getElementById("telefone").addEventListener("input", function () {
+                FormtTelefone(this);
+            });
+            document.getElementById("CNPJ").addEventListener("input", function () {
+                FormtCnpj(this);
+            });
+
+            function FormtTelefone(input) {
+
+                let telefone = input.value.replace(/\D/g, '');
+
+                telefone = telefone.replace(/^(\d{2})(\d{3})(\d{2})(\d{1})(\d{4})(\d{4})$/, '+$1 $2 ($3) $4 $5-$6');
+
+                input.value = telefone;
+
+            }
+
+            function FormtCnpj(input) {
+
+                let cnpj = input.value.replace(/\D/g, '');
+
+                cnpj = cnpj.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5');
+
+                input.value = cnpj;
+
+            }
+
+            function FormtCep(input) {
+
+                let cep = input.value.replace(/\D/g, '');
+
+                cep = cep.replace(/^(\d{5})(\d{3})$/, '$1-$2');
+
+                input.value = cep;
+
+                if (input.value.length == 9) {
+                    EnderecoCep(input.value);
+                }
+
+            }
+
+            function EnderecoCep(cep) {
+                const apiUrl = `https://viacep.com.br/ws/${cep}/json/`;
+
+                fetch(apiUrl)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (typeof data.cep != 'undefined') {
+                            var logradouro = data.logradouro;
+                            var bairro = data.bairro;
+                            var cidade = data.localidade;
+                            var estado = data.uf;
+                            var complemento = data.complemento;
+
+                            console.log(data);
+
+                            var endereco = logradouro + `, bairro ${bairro}, cidade ${cidade}, estado ${estado}`;
+
+                            document.getElementById('endereco').value = endereco;
+
+                        }
+                        else {
+                            alert('CEP não encontrado');
+                            document.getElementById('endereco').value = "";
+                            document.getElementById('cep').value = "";
+                            console.log(data)
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Erro na requisição à API: ', error);
+                    })
+            }
+
+            let produto = [];
+
+            const btnProduto = document.getElementById("produto");
+            btnProduto.addEventListener("click", () => {
+                if (document.getElementById("descricao").value == "" || document.getElementById("unidade").value == "" || document.getElementById("quantEstoque").value == "" || document.getElementById("valorUnitario").value == "") {
+                    alert("preencha todos os campos do produto")
+                } else {
+                    event.preventDefault();
+                    let valorTotal = parseFloat(document.getElementById("quantEstoque").value) * parseFloat(document.getElementById("valorUnitario").value);
+
+                    produto.push({
+                        descricao: document.getElementById("descricao").value,
+                        unidade: document.getElementById("unidade").value,
+                        quantEstoque: document.getElementById("quantEstoque").value,
+                        valorUnitario: document.getElementById("valorUnitario").value,
+                        valorTotal: valorTotal
+                    });
+
+                    SalvarProduto();
+                    LoadProduto();
+
+                    document.getElementById("descricao").value = "";
+                    document.getElementById("quantEstoque").value = "";
+                    document.getElementById("unidade").value = "";
+                    document.getElementById("valorUnitario").value = "";
+                }
+            })
+
+            function SalvarProduto() {
+                localStorage.setItem("produto", JSON.stringify(produto));
+            }
+
+            function DeletarProduto(index) {
+                produto.splice(index, 1);
+                SalvarProduto();
+                LoadProduto();
+            }
+
+            function LoadProduto() {
+                const produtosData = localStorage.getItem("produto");
+                if (produtosData) {
+                    produto = JSON.parse(produtosData);
+                }
+
+                const tblProdutos = document.getElementById("exibirProdutos");
+                tblProdutos.innerHTML = `
+                <thead>
+                    <tr>
+                        <th>Descrição</th>
+                        <th>Unidade de Medida</th>
+                        <th>Quantidade em Estoque</th>
+                        <th>Valor Unitario</th>
+                        <th>Valor Total</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                `;
+                produto.forEach((item, index) => {
+                    tblProdutos.innerHTML += `
+                        <tr>
+                            <td>${item.descricao}</td>
+                            <td>${item.unidade}</td>
+                            <td>${item.quantEstoque}</td>
+                            <td>${item.valorUnitario}</td>
+                            <td>${item.valorTotal}</td>
+                            <td><button class="excluir" data-index="${index}">excluir</button></td>
+                        </tr>
+                    `
+                });
+                tblProdutos.innerHTML += "</tbody>";
+
+
+                document.querySelectorAll(".excluir").forEach(excluir => {
+                    excluir.addEventListener("click", (event) => {
+                        DeletarProduto(event.target.dataset.index);
+                    })
+                })
+            }
+
+            let anexos = [];
+
+            function SalvarAnexo() {
+                sessionStorage.setItem("anexo", JSON.stringify(anexos))
+            }
+
+            function DeletarAnexo(index) {
+                anexos.splice(index, 1);
+                SalvarAnexo();
+                LoadAnexo();
+            }
+
+            const btnAnexo = document.getElementById("anexo");
+            btnAnexo.addEventListener("click", () => {
+
+                event.preventDefault();
+
+                const inputAnexo = document.getElementById("arquivo");
+                if (inputAnexo && inputAnexo.files && inputAnexo.files.length > 0) {
+
+                    const file = inputAnexo.files[0];
+                    console.log(file)
+
+                    if (file) {
+                        const reader = new FileReader();
+
+                        reader.onload = function (e) {
+                            const conteudo = e.target.result;
+                            const blob = new Blob([conteudo], { type: file.type })
+                            console.log(blob)
+                            anexos.push({
+                                nome: file.name,
+                                blob: blob
+                            });
+
+                            SalvarAnexo();
+                            LoadAnexo();
+                            inputAnexo.value = "";
+                        }
+
+                        reader.readAsArrayBuffer(file);
+                    }
+                } else {
+                    alert("Nem um arquivo selecionado");
+                }
+            })
+
+            function LoadAnexo() {
+                const anexosData = sessionStorage.getItem("anexo");
+                if (anexosData) {
+                    anexos = JSON.parse(anexosData);
+                }
+
+                const tblAnexo = document.getElementById("exibirAnexos");
+                tblAnexo.innerHTML = `
+                <thead>
+                    <tr>
+                        <th>Nome</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                `;
+                anexos.forEach((anexo, index) => {
+                    tblAnexo.innerHTML += `
+                        <tr>
+                            <td>${anexo.nome}</td>
+                            <td><button class="excluir" data-index="${index}">excluir</button></td>
+                        </tr>
+                    `
+                });
+                tblAnexo.innerHTML += "</tbody>";
+
+
+                document.querySelectorAll(".excluir").forEach(excluir => {
+                    excluir.addEventListener("click", (event) => {
+                        DeletarAnexo(event.target.dataset.index);
+                    })
+                })
+            }
+
+            const btnFornecedor = document.getElementById("salvarFornecedor");
+            btnFornecedor.addEventListener("click", () => {
+                if (document.getElementById("razaoSocial").value == "" ||
+                    document.getElementById("nomeFantasia").value == "" ||
+                    document.getElementById("CNPJ").value == "" ||
+                    document.getElementById("nomePessoaContato").value == "" ||
+                    document.getElementById("telefone").value == "" ||
+                    document.getElementById("email").value == "") {
+                    alert("preencha os campos obrigatorios do fornecedor")
+                } else {
+                    const produtoString = localStorage.getItem("produto");
+                    const produtoArray = JSON.parse(produtoString);
+
+                    if (!Array.isArray(produtoArray) || produtoArray.length === 0) {
+                        alert("Insira ao menos um produto para continuar");
+                    } else {
+                        const anexoString = sessionStorage.getItem("anexo");
+                        const anexoArray = JSON.parse(anexoString);
+                        console.log(anexoArray);
+                        if (!Array.isArray(anexoArray) || anexoArray.length === 0) {
+                            alert("Insira ao menos um anexo para continuar");
+                        } else {
+                            const fornecedor = {
+                                razaoSocial: document.getElementById("razaoSocial").value,
+                                nomeFantasia: document.getElementById("nomeFantasia").value,
+                                cnpj: document.getElementById("CNPJ").value,
+                                inscricaoEstadual: document.getElementById("inscricaoEstadual").value,
+                                inscricaoMunicipal: document.getElementById("inscricaoMunicipal").value,
+                                nomeContato: document.getElementById("nomePessoaContato").value,
+                                telefoneContato: document.getElementById("telefone").value,
+                                emailContato: document.getElementById("email").value,
+                                produtos: produtoArray,
+                                anexos: anexoArray
+                            };
+
+                            console.log(fornecedor);
+                        }
+                    }
+                }
+            });
+            try {
+                LoadProduto();
+            } catch (ex) {
+
+            }
+            try {
+                LoadAnexo();
+            } catch (ex) {
+
+            }
+        });
+    </script>
+</body>
+
+</html>
